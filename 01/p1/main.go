@@ -27,7 +27,6 @@ func main() {
 		s := -1
 		e := -1
 		line := scanner.Bytes()
-		log.Printf("line: %q", line)
 		for _, c := range line {
 			if c < '0' || c > '9' {
 				continue
@@ -39,7 +38,6 @@ func main() {
 			}
 
 			e = int(c - '0')
-			log.Printf("s: %d e: %d", s, e)
 		}
 
 		if s == -1 {
@@ -49,7 +47,7 @@ func main() {
 		if e == -1 {
 			e = s
 		}
-		log.Println(s*10+e, res)
+
 		res += s*10 + e
 	}
 	log.Println(res)

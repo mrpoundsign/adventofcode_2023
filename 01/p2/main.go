@@ -37,11 +37,7 @@ func main() {
 	res := 0
 	for scanner.Scan() {
 		lineS := scanner.Text()
-		// if lineS == "abcone2threexyz" {
-		// 	log.Fatal("fin")
-		// }
 		line := []byte(lineS)
-		// log.Printf("line: %s", lineS)
 		s := -1
 		e := -1
 		di := 0
@@ -50,7 +46,6 @@ func main() {
 		for i := 0; i < len(line); i++ {
 			c := line[i]
 			if c < '0' || c > '9' {
-				// log.Printf("c: %q", c)
 				found := false
 				for ri, r := range replacements {
 					rLen := len(r)
@@ -58,15 +53,12 @@ func main() {
 						continue
 					}
 
-					// if c == r[di] {
 					if byteSliceEqual(r[:di+1], line[i-di:i+1]) {
-						// log.Printf("c, r, di, rl: %q, %q, %q, %d", c, r[:di+1], line[cp-di:cp+1], di)
 						if di == rLen-1 {
 							i = i - di
 							di = 0
 							c = ri
 							found = true
-							// log.Println("found")
 							break
 						}
 
@@ -95,9 +87,8 @@ func main() {
 		if e == -1 {
 			e = s
 		}
+
 		res += s*10 + e
-		log.Printf("line: %q, s: %d e: %d", line, s*10+e, res)
-		// log.Println()
 	}
 	log.Println(res)
 }
