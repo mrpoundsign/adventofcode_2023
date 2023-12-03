@@ -138,21 +138,16 @@ func main() {
 		}
 	}
 
-	log.Printf("symbols: %v", symbols)
-	log.Printf("parts: %v", parts)
-
-	valid_parts := []int{}
 	valid_parts_sum := 0
 	for _, b := range parts {
 		for _, a := range symbols {
 			if !a.intersects(b.area) {
 				continue
 			}
-			valid_parts = append(valid_parts, b.number)
 			valid_parts_sum += b.number
 			break
 		}
 	}
 
-	log.Printf("valid parts: %d, %v", valid_parts_sum, valid_parts)
+	log.Printf("Parts Sum: %d", valid_parts_sum)
 }
