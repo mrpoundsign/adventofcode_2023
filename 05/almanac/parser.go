@@ -62,7 +62,7 @@ type SeedMap struct {
 func (sm SeedMap) LocationFor(seed int) int {
 	for i, source := range sm.Sources {
 		counts := sm.Counts[i]
-		if seed <= source || seed >= source+counts {
+		if seed < source || seed >= source+counts {
 			continue
 		}
 

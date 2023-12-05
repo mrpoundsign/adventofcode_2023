@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mrpoundsign/adventofcode_2023/05/p1/almanac"
+	"github.com/mrpoundsign/adventofcode_2023/05/almanac"
 )
 
 func main() {
