@@ -2,6 +2,7 @@ package almanac
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"strconv"
@@ -54,21 +55,127 @@ func (sl SeedList) String() string {
 type SeedMap struct {
 	From         string
 	To           string
-	Counts       []int
-	Sources      []int
+	Ranges       [][2]int
 	Destinations []int
 }
 
 func (sm SeedMap) LocationFor(seed int) int {
-	for i, source := range sm.Sources {
-		counts := sm.Counts[i]
-		if seed < source || seed >= source+counts {
+	for i, r := range sm.Ranges {
+		if seed < r[0] || seed > r[1] {
 			continue
 		}
 
-		return sm.Destinations[i] + seed - source
+		pos := seed - r[0]
+
+		return sm.Destinations[i] + pos
 	}
 	return seed
+}
+
+func (sm SeedMap) locationForRange(i int, r [2]int) (error, [][2]int) {
+	if len(sm.Ranges) <= i {
+		return fmt.Errorf("no such range %d", i), nil
+	}
+
+	rm := sm.Ranges[i]
+	newRanges := [][2]int{}
+	rFirst := r[0]
+	rLast := r[1]
+	first := rm[0]
+	last := rm[1]
+	size := last - first
+
+	if size < 0 {
+		log.Panicln("zero size", first, last, rFirst, rLast)
+	}
+
+	if rLast < first || last < rFirst {
+		// Not in this map
+		return nil, [][2]int{}
+	}
+
+	log.Println("first", first, "last", last, "rfirst", rFirst, "rlast", rLast, "size", size)
+
+	d := sm.Destinations[i]
+	e := d + size
+
+	if rFirst > first {
+		log.Println("rFirst > first", rFirst, first)
+		d += rFirst - first
+		log.Println("d", d)
+	}
+
+	if rLast < last {
+		log.Println("rLast < last", rLast, last)
+		e -= last - rLast
+		log.Println("e", e)
+	}
+
+	if rFirst < first {
+		log.Println("rFirst < first", rFirst, first)
+		count := first - rFirst
+		newRanges = append(newRanges, [2]int{rFirst, rFirst + count})
+	}
+
+	if rLast > last {
+		log.Println("rLast > last", rLast, last)
+		count := rLast - last
+		newRanges = append(newRanges, [2]int{rLast - count, rLast})
+	}
+
+	newRanges = append(newRanges, [2]int{d, e})
+	return nil, newRanges
+}
+
+func (sm SeedMap) LocationForRange(ranges [][2]int) [][2]int {
+	newRanges := [][2]int{}
+	unprocessed := ranges
+	for i, rm := range sm.Ranges {
+		newUnprocessed := [][2]int{}
+		for _, r := range unprocessed {
+			rFirst := r[0]
+			rLast := r[1]
+			first := rm[0]
+			last := rm[1]
+			size := last - first
+
+			if size < 0 {
+				log.Panicln("zero size", first, last, rFirst, rLast)
+			}
+
+			if rLast < first || last < rFirst {
+				newUnprocessed = append(newUnprocessed, r)
+				// Not in this map
+				continue
+			}
+
+			d := sm.Destinations[i]
+			e := d + size
+
+			if rFirst > first {
+				d += rFirst - first
+			}
+
+			if rLast < last {
+				e -= last - rLast
+			}
+
+			if rFirst < first {
+				count := first - rFirst
+				newUnprocessed = append(newUnprocessed, [2]int{rFirst, rFirst + count - 1})
+			}
+
+			if rLast > last {
+				count := rLast - last
+				newUnprocessed = append(newUnprocessed, [2]int{rLast - count + 1, rLast})
+			}
+
+			newRanges = append(newRanges, [2]int{d, e})
+		}
+		unprocessed = newUnprocessed
+	}
+
+	return append(unprocessed, newRanges...)
 }
 
 func (sm SeedMap) String() string {
@@ -77,9 +184,11 @@ func (sm SeedMap) String() string {
 	buf.WriteByte('-')
 	buf.WriteString(sm.To)
 	buf.WriteString(":\n")
-	for _, source := range sm.Sources {
+	for _, source := range sm.Ranges {
 		buf.WriteString(" s:")
-		buf.WriteString(strconv.Itoa(source))
+		buf.WriteString(strconv.Itoa(source[0]))
+		buf.WriteString(" ,:")
+		buf.WriteString(strconv.Itoa(source[1]))
 	}
 
 	buf.WriteByte('\n')
@@ -273,9 +382,8 @@ func (p *Parser) Parse() (SeedList, []SeedMap) {
 					log.Fatalln("expected number")
 				}
 
-				currMap.Sources = append(currMap.Sources, source)
+				currMap.Ranges = append(currMap.Ranges, [2]int{source, source + count - 1})
 				currMap.Destinations = append(currMap.Destinations, dest)
-				currMap.Counts = append(currMap.Counts, count)
 
 				s = STATE_MAP
 				continue
