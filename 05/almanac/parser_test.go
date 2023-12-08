@@ -149,7 +149,7 @@ func TestSeedMap_LocationForRange(t *testing.T) {
 			args: args{
 				ranges: [][2]int{{19, 29}, {31, 39}},
 			},
-			want: [][2]int{{20, 29}, {59, 59}, {19, 19}, {100, 109}, {31, 39}},
+			want: [][2]int{{31, 39}, {59, 59}, {100, 109}},
 		},
 	}
 	for _, tt := range tests {
